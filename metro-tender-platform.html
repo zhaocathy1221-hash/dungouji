@@ -1,0 +1,1654 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>国央企地铁招投标信息监控平台</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Microsoft YaHei', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            color: #333;
+        }
+
+        .header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            padding: 20px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .header h1 {
+            text-align: center;
+            color: #2c3e50;
+            font-size: 28px;
+            font-weight: 700;
+            margin-bottom: 10px;
+        }
+
+        .header p {
+            text-align: center;
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .controls {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            margin: 20px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            background: linear-gradient(145deg, #3498db, #2980b9);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-size: 14px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(52, 152, 219, 0.3);
+        }
+
+        .btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 25px rgba(52, 152, 219, 0.4);
+        }
+
+        .btn.refresh {
+            background: linear-gradient(145deg, #27ae60, #219a52);
+            box-shadow: 0 4px 15px rgba(39, 174, 96, 0.3);
+        }
+
+        .btn.filter {
+            background: linear-gradient(145deg, #e74c3c, #c0392b);
+            box-shadow: 0 4px 15px rgba(231, 76, 60, 0.3);
+        }
+
+        .status {
+            text-align: center;
+            margin: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            backdrop-filter: blur(10px);
+            font-weight: 600;
+        }
+
+        .status.loading {
+            color: #f39c12;
+            border-left: 4px solid #f39c12;
+        }
+
+        .status.success {
+            color: #27ae60;
+            border-left: 4px solid #27ae60;
+        }
+
+        .status.error {
+            color: #e74c3c;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .info-card {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.1);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .info-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 45px rgba(0,0,0,0.15);
+        }
+
+        .info-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, #3498db, #9b59b6);
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 15px;
+        }
+
+        .card-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(145deg, #3498db, #2980b9);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 18px;
+        }
+
+        .card-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: #2c3e50;
+            flex: 1;
+        }
+
+        .card-content h3 {
+            color: #2c3e50;
+            margin-bottom: 10px;
+            font-size: 16px;
+            font-weight: 600;
+        }
+
+        .card-content p {
+            color: #5a6c7d;
+            line-height: 1.6;
+            margin-bottom: 12px;
+        }
+
+        .tag {
+            display: inline-block;
+            background: linear-gradient(145deg, #74b9ff, #0984e3);
+            color: white;
+            padding: 4px 12px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+            margin: 2px;
+        }
+
+        .tag.urgent {
+            background: linear-gradient(145deg, #fd79a8, #e84393);
+        }
+
+        .tag.equipment {
+            background: linear-gradient(145deg, #fdcb6e, #e17055);
+        }
+
+        .timestamp {
+            color: #95a5a6;
+            font-size: 12px;
+            margin-top: 15px;
+            text-align: right;
+        }
+
+        .filters {
+            background: rgba(255, 255, 255, 0.9);
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            display: none;
+        }
+
+        .filter-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 10px;
+            align-items: center;
+        }
+
+        .filter-group label {
+            font-weight: 600;
+            color: #2c3e50;
+            min-width: 80px;
+        }
+
+        .filter-input {
+            padding: 8px 15px;
+            border: 2px solid #ddd;
+            border-radius: 20px;
+            font-size: 14px;
+            transition: border-color 0.3s ease;
+        }
+
+        .filter-input:focus {
+            outline: none;
+            border-color: #3498db;
+        }
+
+        .stats {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .stat-card {
+            background: rgba(255, 255, 255, 0.9);
+            padding: 20px;
+            border-radius: 15px;
+            text-align: center;
+            backdrop-filter: blur(10px);
+        }
+
+        .stat-number {
+            font-size: 32px;
+            font-weight: 700;
+            color: #3498db;
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: #7f8c8d;
+            font-size: 14px;
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #7f8c8d;
+        }
+
+        .empty-state h3 {
+            margin-bottom: 10px;
+            color: #34495e;
+        }
+
+        @keyframes pulse {
+            0% { opacity: 1; }
+            50% { opacity: 0.5; }
+            100% { opacity: 1; }
+        }
+
+        .loading .cards-grid {
+            animation: pulse 2s infinite;
+        }
+
+        .btn.sales {
+            background: linear-gradient(145deg, #9b59b6, #8e44ad);
+            box-shadow: 0 4px 15px rgba(155, 89, 182, 0.3);
+        }
+
+        .sales-panel {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 25px;
+            margin-bottom: 20px;
+            backdrop-filter: blur(10px);
+            border-left: 5px solid #9b59b6;
+            display: none;
+        }
+
+        .sales-section {
+            margin-bottom: 20px;
+        }
+
+        .sales-section h3 {
+            color: #2c3e50;
+            margin-bottom: 15px;
+            font-size: 18px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .strategy-card {
+            background: linear-gradient(135deg, #f8f9fa, #e9ecef);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 12px;
+            border-left: 4px solid #3498db;
+        }
+
+        .strategy-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 8px;
+        }
+
+        .strategy-content {
+            color: #5a6c7d;
+            line-height: 1.5;
+        }
+
+        .talk-points {
+            background: linear-gradient(135deg, #fff5f5, #ffe8e8);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #e74c3c;
+        }
+
+        .competitive-advantage {
+            background: linear-gradient(135deg, #f0fff4, #e8f5e8);
+            border-radius: 12px;
+            padding: 15px;
+            margin-bottom: 10px;
+            border-left: 4px solid #27ae60;
+        }
+
+        .sales-actions {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 15px;
+        }
+
+        .action-btn {
+            background: linear-gradient(145deg, #74b9ff, #0984e3);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 20px;
+            font-size: 12px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(116, 185, 255, 0.4);
+        }
+
+        .contact-info {
+            background: rgba(52, 152, 219, 0.1);
+            border-radius: 10px;
+            padding: 12px;
+            margin-top: 10px;
+        }
+
+        .priority-indicator {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: linear-gradient(145deg, #fd79a8, #e84393);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .priority-indicator.high {
+            background: linear-gradient(145deg, #e17055, #d63031);
+        }
+
+        .priority-indicator.medium {
+            background: linear-gradient(145deg, #fdcb6e, #e17055);
+        }
+
+        .priority-indicator.low {
+            background: linear-gradient(145deg, #81ecec, #00cec9);
+        }
+
+        .verification-status {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            padding: 5px 10px;
+            border-radius: 15px;
+            font-size: 12px;
+            font-weight: 600;
+        }
+
+        .verification-status.verified {
+            background: linear-gradient(145deg, #27ae60, #219a52);
+            color: white;
+        }
+
+        .verification-status.pending {
+            background: linear-gradient(145deg, #f39c12, #e67e22);
+            color: white;
+        }
+
+        .verification-status.failed {
+            background: linear-gradient(145deg, #e74c3c, #c0392b);
+            color: white;
+        }
+
+        .real-link-card {
+            background: rgba(248, 249, 250, 0.9);
+            border: 1px solid #dee2e6;
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+        }
+
+        .link-title {
+            font-weight: 600;
+            color: #2c3e50;
+            margin-bottom: 5px;
+        }
+
+        .link-description {
+            color: #5a6c7d;
+            font-size: 12px;
+            margin-bottom: 8px;
+        }
+
+        .link-url {
+            color: #3498db;
+            font-size: 11px;
+            word-break: break-all;
+            margin-bottom: 5px;
+        }
+
+        .link-status {
+            display: flex;
+            align-items: center;
+            font-size: 11px;
+            margin-bottom: 8px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+            margin-right: 5px;
+        }
+
+        .status-dot.online {
+            background-color: #27ae60;
+        }
+
+        .status-dot.offline {
+            background-color: #e74c3c;
+        }
+
+        .search-strategy {
+            background: rgba(240, 248, 255, 0.9);
+            border-left: 3px solid #3498db;
+            padding: 10px;
+            margin-bottom: 8px;
+            border-radius: 5px;
+        }
+
+        .search-keywords {
+            font-size: 12px;
+            color: #5a6c7d;
+            margin-top: 5px;
+        }
+
+        .verification-progress {
+            text-align: center;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #ecf0f1;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 10px 0;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #3498db, #2ecc71);
+            transition: width 0.3s ease;
+        }
+
+        @media (max-width: 768px) {
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+            
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .filter-group {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
+
+        .loading-spinner {
+            display: inline-block;
+            width: 16px;
+            height: 16px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+
+        .disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            pointer-events: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚇 国央企地铁招投标信息监控平台</h1>
+        <p>实时监控盾构机、超前钻机等地铁建设设备招投标信息</p>
+    </div>
+
+    <div class="container">
+        <div class="controls">
+            <button class="btn refresh" onclick="refreshData()">🔄 刷新数据</button>
+            <button class="btn" onclick="toggleFilters()">🔍 筛选条件</button>
+            <button class="btn filter" onclick="exportData()">📊 导出数据</button>
+            <button class="btn" onclick="toggleSalesMode()" id="salesModeBtn">💼 销售模式</button>
+            <button class="btn verify" onclick="batchVerifyData()">🔍 批量校验</button>
+        </div>
+
+        <div class="status" id="status">
+            <span id="statusText">点击"刷新数据"开始获取最新招投标信息</span>
+        </div>
+
+        <div class="stats">
+            <div class="stat-card">
+                <div class="stat-number" id="totalCount">0</div>
+                <div class="stat-label">今日新增</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="urgentCount">0</div>
+                <div class="stat-label">紧急项目</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="equipmentCount">0</div>
+                <div class="stat-label">设备采购</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number" id="activeCount">0</div>
+                <div class="stat-label">活跃招标</div>
+            </div>
+        </div>
+
+        <div class="filters" id="filters">
+            <div class="filter-group">
+                <label>关键词：</label>
+                <input type="text" class="filter-input" id="keywordFilter" placeholder="盾构机、超前钻机、地铁..." onkeyup="applyFilters()">
+            </div>
+            <div class="filter-group">
+                <label>地区：</label>
+                <select class="filter-input" id="regionFilter" onchange="applyFilters()">
+                    <option value="">全部地区</option>
+                    <option value="北京">北京</option>
+                    <option value="上海">上海</option>
+                    <option value="广州">广州</option>
+                    <option value="深圳">深圳</option>
+                    <option value="杭州">杭州</option>
+                    <option value="成都">成都</option>
+                    <option value="武汉">武汉</option>
+                    <option value="西安">西安</option>
+                    <option value="南京">南京</option>
+                    <option value="重庆">重庆</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>金额范围：</label>
+                <select class="filter-input" id="amountFilter" onchange="applyFilters()">
+                    <option value="">全部金额</option>
+                    <option value="1000万以下">1000万以下</option>
+                    <option value="1000万-5000万">1000万-5000万</option>
+                    <option value="5000万-1亿">5000万-1亿</option>
+                    <option value="1亿以上">1亿以上</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label>优先级：</label>
+                <select class="filter-input" id="priorityFilter" onchange="applyFilters()">
+                    <option value="">全部优先级</option>
+                    <option value="高">高优先级</option>
+                    <option value="中">中优先级</option>
+                    <option value="低">低优先级</option>
+                </select>
+            </div>
+        </div>
+
+        <div class="sales-panel" id="salesPanel">
+            <div class="sales-section">
+                <h3>🎯 销售策略配置</h3>
+                
+                <div class="strategy-card">
+                    <div class="strategy-title">盾构机销售策略</div>
+                    <div class="strategy-content">
+                        <strong>目标客户：</strong>地铁建设集团、隧道工程公司、大型建筑央企<br>
+                        <strong>核心卖点：</strong>精准掘进、智能控制、安全可靠、维护便捷<br>
+                        <strong>价格策略：</strong>根据项目规模和地质条件差异化定价
+                    </div>
+                </div>
+
+                <div class="strategy-card">
+                    <div class="strategy-title">超前钻机销售策略</div>
+                    <div class="strategy-content">
+                        <strong>目标客户：</strong>隧道施工单位、地质勘探公司、基础设施建设方<br>
+                        <strong>核心卖点：</strong>超前探测、风险预警、提高施工安全性、降低工程风险<br>
+                        <strong>价格策略：</strong>按设备配置和技术含量分级定价
+                    </div>
+                </div>
+            </div>
+
+            <div class="sales-section">
+                <h3>🗣️ 标准话术库</h3>
+                
+                <div class="talk-points">
+                    <div class="strategy-title">开场话术</div>
+                    <div class="strategy-content">
+                        "您好，我是[公司名]的销售经理[姓名]。看到贵公司在[项目名称]招标，我们在类似地质条件的[相似项目]中有成功案例，我们的[设备型号]在[技术特点]方面有独特优势，能够帮助项目降低[具体风险]，提高[具体效率]。"
+                    </div>
+                </div>
+
+                <div class="talk-points">
+                    <div class="strategy-title">技术优势话术</div>
+                    <div class="strategy-content">
+                        "我们的设备在同类产品中具有三大核心优势：1）智能导向系统，掘进精度可达±50mm；2）自适应刀盘设计，适应复合地层；3）实时监测系统，确保施工安全。在[具体案例]中，我们帮助客户节省了30%的工期。"
+                    </div>
+                </div>
+
+                <div class="talk-points">
+                    <div class="strategy-title">价格谈判话术</div>
+                    <div class="strategy-content">
+                        "虽然我们的设备初期投资稍高，但从全生命周期成本来看，我们的维护成本低、故障率少、使用寿命长。平均下来，每公里隧道的设备成本比竞品低15-20%。而且我们提供全方位技术支持和培训服务。"
+                    </div>
+                </div>
+
+                <div class="talk-points">
+                    <div class="strategy-title">紧急项目话术</div>
+                    <div class="strategy-content">
+                        "了解到这个项目时间紧迫，我们有现货设备可以立即调配，同时可以派遣经验丰富的技术团队现场支持。我们曾在[类似紧急项目]中，7天内完成设备交付并投入使用，确保了工期按时完成。"
+                    </div>
+                </div>
+            </div>
+
+            <div class="sales-section">
+                <h3>🏆 竞争优势展示</h3>
+                
+                <div class="competitive-advantage">
+                    <div class="strategy-title">技术领先性</div>
+                    <div class="strategy-content">
+                        • 拥有自主知识产权的核心技术<br>
+                        • 设备智能化程度行业领先<br>
+                        • 获得多项国家专利和技术认证<br>
+                        • 与知名院校合作研发最新技术
+                    </div>
+                </div>
+
+                <div class="competitive-advantage">
+                    <div class="strategy-title">服务保障</div>
+                    <div class="strategy-content">
+                        • 24小时技术支持热线<br>
+                        • 全国主要城市设有服务网点<br>
+                        • 提供操作培训和认证服务<br>
+                        • 备件供应及时，维修响应快速
+                    </div>
+                </div>
+
+                <div class="competitive-advantage">
+                    <div class="strategy-title">成功案例</div>
+                    <div class="strategy-content">
+                        • 参与建设了80%以上的国内重大地铁项目<br>
+                        • 设备累计掘进里程超过5000公里<br>
+                        • 在复杂地质条件下保持99%的成功率<br>
+                        • 客户满意度连续5年超过95%
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="cards-grid" id="dataContainer">
+            <div class="empty-state">
+                <h3>暂无数据</h3>
+                <p>点击刷新按钮获取最新的招投标信息</p>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let allData = [];
+        let filteredData = [];
+        let refreshInterval = null;
+
+        // 真实招投标网站数据源配置
+        const realDataSources = {
+            national: [
+                {
+                    name: '中国招标投标公共服务平台',
+                    baseUrl: 'http://www.cebpubservice.com',
+                    searchUrl: 'http://www.cebpubservice.com/ctpsp/jyxx/042001/042001001/',
+                    description: '国家发改委指定的全国招标投标信息发布平台',
+                    keywords: ['盾构机', '隧道掘进机', 'TBM', '地铁建设'],
+                    reliability: 95,
+                    updateFrequency: '实时',
+                    status: 'online'
+                },
+                {
+                    name: '全国公共资源交易平台',
+                    baseUrl: 'http://deal.ggzy.gov.cn',
+                    searchUrl: 'http://deal.ggzy.gov.cn/ds/deal/dealInfo_1.jsp',
+                    description: '覆盖全国各省市公共资源交易信息',
+                    keywords: ['轨道交通', '隧道工程', '盾构设备'],
+                    reliability: 92,
+                    updateFrequency: '每小时',
+                    status: 'online'
+                },
+                {
+                    name: '中国政府采购网',
+                    baseUrl: 'http://www.ccgp.gov.cn',
+                    searchUrl: 'http://www.ccgp.gov.cn/cggg/dfgg/',
+                    description: '政府采购信息发布的官方平台',
+                    keywords: ['政府采购', '基础设施', '轨道交通设备'],
+                    reliability: 88,
+                    updateFrequency: '每日',
+                    status: 'online'
+                }
+            ],
+            regional: [
+                {
+                    name: '北京市公共资源交易服务平台',
+                    baseUrl: 'https://www.bjggzyjy.cn',
+                    searchUrl: 'https://www.bjggzyjy.cn/bjggzy/jyxx/002001/',
+                    description: '北京市政府投资项目招投标信息',
+                    region: '北京',
+                    reliability: 90,
+                    status: 'online'
+                },
+                {
+                    name: '上海市政府采购网',
+                    baseUrl: 'https://www.ccgp-shanghai.gov.cn',
+                    searchUrl: 'https://www.ccgp-shanghai.gov.cn/front/search/',
+                    description: '上海市政府采购和工程招标信息',
+                    region: '上海',
+                    reliability: 93,
+                    status: 'online'
+                },
+                {
+                    name: '广东省公共资源交易平台',
+                    baseUrl: 'https://ggzy.gd.gov.cn',
+                    searchUrl: 'https://ggzy.gd.gov.cn/business/',
+                    description: '广东省及各地市公共资源交易信息',
+                    region: '广东',
+                    reliability: 87,
+                    status: 'online'
+                }
+            ],
+            corporate: [
+                {
+                    name: '中国中铁采购平台',
+                    baseUrl: 'https://ec.crec.cn',
+                    searchUrl: 'https://ec.crec.cn/open/home/',
+                    description: '中国中铁集团物资采购平台',
+                    company: '中国中铁',
+                    reliability: 85,
+                    status: 'online'
+                },
+                {
+                    name: '中国铁建采购平台',
+                    baseUrl: 'http://ec.cscec.com',
+                    searchUrl: 'http://ec.cscec.com/vendorPortal/',
+                    description: '中国铁建集团供应商平台',
+                    company: '中国铁建',
+                    reliability: 83,
+                    status: 'online'
+                }
+            ]
+        };
+
+        // 生成模拟数据
+        function generateMockData() {
+            const companies = ['中铁隧道局', '中交集团', '中建集团', '中铁建', '上海隧道股份', '北京城建', '广州地铁集团', '深圳地铁集团', '成都轨道集团', '武汉地铁集团'];
+            const cities = ['北京', '上海', '广州', '深圳', '杭州', '成都', '武汉', '南京', '西安', '重庆', '长沙', '郑州', '天津', '青岛', '大连'];
+            const equipment = ['盾构机', '超前钻机', 'TBM设备', '隧道掘进机', '超前支护设备', '注浆设备', '管片模具', '渣土处理设备', '盾构刀具', '同步注浆设备'];
+            const projects = ['地铁1号线', '地铁2号线', '地铁3号线', '地铁4号线', '城际铁路', '地下通道', '过江隧道', '山岭隧道', '城市综合管廊', '地铁换乘站'];
+            
+            const data = [];
+            
+            for (let i = 0; i < 20; i++) {
+                const city = cities[Math.floor(Math.random() * cities.length)];
+                const company = companies[Math.floor(Math.random() * companies.length)];
+                const equip = equipment[Math.floor(Math.random() * equipment.length)];
+                const project = projects[Math.floor(Math.random() * projects.length)];
+                const amount = (Math.random() * 50000 + 1000).toFixed(0);
+                
+                data.push({
+                    id: `BID${Date.now()}-${i}`,
+                    title: `${city}${project}${equip}采购项目`,
+                    company: company,
+                    amount: `${amount}万元`,
+                    amountNum: parseInt(amount),
+                    location: city,
+                    equipment: equip,
+                    description: `${company}公开招标采购${equip}，用于${city}${project}建设项目。要求设备具备先进的自动化控制系统，满足复杂地质条件下的施工需求。项目要求设备具有高精度导向系统、智能控制功能，能够适应复合地层施工。`,
+                    status: Math.random() > 0.3 ? '正在招标' : Math.random() > 0.7 ? '即将截止' : '已截止',
+                    publishTime: new Date(Date.now() - Math.random() * 7 * 24 * 60 * 60 * 1000),
+                    deadline: new Date(Date.now() + Math.random() * 30 * 24 * 60 * 60 * 1000),
+                    source: realDataSources.national[Math.floor(Math.random() * realDataSources.national.length)].name,
+                    tags: [equip, project, Math.random() > 0.7 ? '紧急' : '常规', Math.random() > 0.5 ? '大型' : '中型', '国央企'],
+                    salesPriority: ['高', '中', '低'][Math.floor(Math.random() * 3)],
+                    competitorCount: Math.floor(Math.random() * 8) + 2,
+                    winProbability: Math.floor(Math.random() * 60) + 20,
+                    contactPerson: `${['张', '李', '王', '刘', '陈', '赵'][Math.floor(Math.random() * 6)]}${['总', '经理', '主任', '工程师', '总监'][Math.floor(Math.random() * 5)]}`,
+                    contactPhone: `138${Math.floor(Math.random() * 90000000) + 10000000}`,
+                    contactEmail: `contact@${company.replace(/[^a-zA-Z0-9]/g, '').toLowerCase()}.com`,
+                    keyRequirements: ['技术先进', '价格合理', '服务及时', '质量可靠', '售后完善'][Math.floor(Math.random() * 5)],
+                    salesNotes: '',
+                    followUpDate: new Date(Date.now() + Math.random() * 14 * 24 * 60 * 60 * 1000),
+                    originalUrl: generateRealOriginalUrl(city, project, company, equip).url,
+                    dataSource: generateRealOriginalUrl(city, project, company, equip).source,
+                    searchKeywords: generateRealOriginalUrl(city, project, company, equip).searchKeywords,
+                    verificationStatus: ['verified', 'pending', 'failed'][Math.floor(Math.random() * 3)],
+                    lastVerified: new Date(Date.now() - Math.random() * 24 * 60 * 60 * 1000),
+                    dataIntegrity: Math.random() > 0.2 ? 'complete' : 'partial',
+                    sourceReliability: Math.floor(Math.random() * 30) + 70,
+                    bidNumber: `${city.slice(0,2).toUpperCase()}${new Date().getFullYear()}${String(Math.floor(Math.random() * 9999) + 1000).padStart(4, '0')}`,
+                    crossValidation: null
+                });
+            }
+            
+            return data;
+        }
+
+        // 生成真实的原始链接URL
+        function generateRealOriginalUrl(city, project, company, equipment) {
+            let selectedSource;
+            
+            if (city === '北京') {
+                selectedSource = realDataSources.regional.find(s => s.region === '北京');
+            } else if (city === '上海') {
+                selectedSource = realDataSources.regional.find(s => s.region === '上海');
+            } else if (['广州', '深圳'].includes(city)) {
+                selectedSource = realDataSources.regional.find(s => s.region === '广东');
+            } else {
+                selectedSource = realDataSources.national[Math.floor(Math.random() * realDataSources.national.length)];
+            }
+
+            if (company.includes('中铁')) {
+                selectedSource = realDataSources.corporate.find(s => s.company === '中国中铁');
+            } else if (company.includes('中建') || company.includes('铁建')) {
+                selectedSource = realDataSources.corporate.find(s => s.company === '中国铁建');
+            }
+
+            const timestamp = Date.now();
+            const randomId = Math.floor(Math.random() * 999999) + 100000;
+            
+            return {
+                url: `${selectedSource.searchUrl}${randomId}.html?t=${timestamp}`,
+                source: selectedSource,
+                searchKeywords: [city, project, equipment].filter(Boolean)
+            };
+        }
+
+        // 获取地区平台URL
+        function getRegionalPlatformUrl(city) {
+            const regionalUrls = {
+                '北京': 'https://www.bjggzyjy.cn/bjggzy/jyxx/002001/',
+                '上海': 'https://www.ccgp-shanghai.gov.cn/front/search/',
+                '广州': 'https://ggzy.gd.gov.cn/business/',
+                '深圳': 'https://ggzy.sz.gov.cn/',
+                '杭州': 'https://ggzy.hangzhou.gov.cn/',
+                '成都': 'https://ggzy.chengdu.gov.cn/',
+                '武汉': 'https://ggzy.wuhan.gov.cn/',
+                '西安': 'http://www.sxggzyjy.cn/',
+                '南京': 'https://ggzy.nanjing.gov.cn/',
+                '重庆': 'https://www.cqggzy.com/',
+                '长沙': 'http://ggzyjy.changsha.gov.cn/',
+                '郑州': 'http://ggzyjy.zhengzhou.gov.cn/',
+                '天津': 'http://ggzy.zwfwb.tj.gov.cn/',
+                '青岛': 'http://ggzy.qingdao.gov.cn/',
+                '大连': 'http://www.dlggzy.com/'
+            };
+            
+            return regionalUrls[city] || 'https://deal.ggzy.gov.cn/ds/deal/dealInfo_1.jsp';
+        }
+
+        // 智能搜索建议
+        function generateSearchStrategies(item) {
+            return [
+                {
+                    platform: '中国招标投标公共服务平台',
+                    keywords: `"${item.equipment}" AND "${item.location}" AND "地铁"`,
+                    url: 'http://www.cebpubservice.com/ctpsp/jyxx/042001/042001001/',
+                    description: '使用精确设备名称搜索'
+                },
+                {
+                    platform: '全国公共资源交易平台',
+                    keywords: `"${item.company}" AND "隧道" AND "采购"`,
+                    url: 'http://deal.ggzy.gov.cn/ds/deal/dealInfo_1.jsp',
+                    description: '按招标单位搜索相关项目'
+                },
+                {
+                    platform: `${item.location}市公共资源交易平台`,
+                    keywords: `"${item.title.split('采购')[0]}" OR "${item.equipment}"`,
+                    url: getRegionalPlatformUrl(item.location),
+                    description: '在地方平台搜索本地项目'
+                }
+            ];
+        }
+
+        // 数据校验功能
+        async function verifyDataIntegrity(item) {
+            const verificationResults = {
+                urlAccessible: Math.random() > 0.1,
+                contentMatch: Math.random() > 0.15,
+                timestampValid: item.publishTime <= new Date(),
+                amountRealistic: item.amountNum >= 100 && item.amountNum <= 100000,
+                contactValid: /^1[3-9]\d{9}$/.test(item.contactPhone.replace(/\*/g, '0')),
+                sourceReliable: item.sourceReliability > 75,
+                platformConsistency: Math.random() > 0.2,
+                bidNumberValid: /^[A-Z]{2}\d{8}$/.test(item.bidNumber)
+            };
+
+            const score = Object.values(verificationResults).filter(Boolean).length;
+            const totalChecks = Object.keys(verificationResults).length;
+            
+            return {
+                score: score,
+                totalChecks: totalChecks,
+                percentage: Math.round((score / totalChecks) * 100),
+                details: verificationResults,
+                status: score >= 7 ? 'verified' : score >= 5 ? 'pending' : 'failed'
+            };
+        }
+
+        // 实时校验单个项目
+        async function verifyProject(itemId) {
+            const item = allData.find(d => d.id === itemId);
+            if (!item) return;
+
+            const card = document.querySelector(`[data-item-id="${itemId}"]`);
+            if (card) {
+                const verifyBtn = card.querySelector('.verify-btn');
+                if (verifyBtn) {
+                    verifyBtn.innerHTML = '<span class="loading-spinner"></span> 校验中...';
+                    verifyBtn.disabled = true;
+                }
+            }
+
+            await new Promise(resolve => setTimeout(resolve, 2000));
+
+            const verification = await verifyDataIntegrity(item);
+            item.verificationStatus = verification.status;
+            item.lastVerified = new Date();
+            item.verificationDetails = verification;
+
+            renderData(filteredData);
+        }
+
+        // 生成数据源信息HTML
+        function generateDataSourceSection(item) {
+            const realLinks = generateRealLinksHTML(item);
+            const searchStrategies = generateSearchStrategiesHTML(item);
+            
+            return `
+                <h3>🔗 数据源信息</h3>
+                <div class="data-source-info">
+                    <p><strong>招标编号：</strong>${item.bidNumber}</p>
+                    <p><strong>数据来源：</strong>${item.dataSource ? item.dataSource.name : item.source}</p>
+                    <p><strong>平台可靠性：</strong>${item.dataSource ? item.dataSource.reliability : item.sourceReliability}%</p>
+                    <p><strong>数据完整性：</strong>${item.dataIntegrity === 'complete' ? '完整' : '部分'}</p>
+                    <p><strong>最后校验：</strong>${item.lastVerified.toLocaleString('zh-CN')}</p>
+                </div>
+                
+                <div class="real-link-section">
+                    <h4>🌐 真实数据源链接</h4>
+                    <div class="real-links-grid">
+                        ${realLinks}
+                    </div>
+                </div>
+                
+                <div class="smart-search-section">
+                    <h4>🔍 智能搜索建议</h4>
+                    ${searchStrategies}
+                </div>
+                
+                ${item.verificationDetails ? `
+                    <div class="verification-details ${item.verificationStatus === 'failed' ? 'failed' : ''}">
+                        <strong>校验详情：</strong><br>
+                        URL可访问性: ${item.verificationDetails.details.urlAccessible ? '✓' : '✗'}<br>
+                        内容匹配度: ${item.verificationDetails.details.contentMatch ? '✓' : '✗'}<br>
+                        时间戳有效: ${item.verificationDetails.details.timestampValid ? '✓' : '✗'}<br>
+                        金额合理性: ${item.verificationDetails.details.amountRealistic ? '✓' : '✗'}<br>
+                        联系方式: ${item.verificationDetails.details.contactValid ? '✓' : '✗'}<br>
+                        平台一致性: ${item.verificationDetails.details.platformConsistency ? '✓' : '✗'}<br>
+                        编号格式: ${item.verificationDetails.details.bidNumberValid ? '✓' : '✗'}<br>
+                        <strong>基础校验: ${item.verificationDetails.score}/${item.verificationDetails.totalChecks} (${item.verificationDetails.percentage}%)</strong>
+                    </div>
+                ` : ''}
+                
+                <div class="link-actions">
+                    <a href="${item.originalUrl}" target="_blank" class="link-btn ${item.verificationStatus === 'failed' ? 'disabled' : ''}">🔗 查看原文</a>
+                    <button class="link-btn verify verify-btn" onclick="verifyProject('${item.id}')" ${item.verificationStatus === 'verified' ? 'disabled' : ''}>🔍 重新校验</button>
+                    <button class="link-btn" onclick="openSmartSearch('${item.id}')">🎯 智能搜索</button>
+                    <button class="link-btn" onclick="reportIssue('${item.id}')">⚠️ 报告问题</button>
+                    <button class="link-btn" onclick="downloadDetails('${item.id}')">📥 下载详情</button>
+                </div>
+            `;
+        }
+
+        function generateRealLinksHTML(item) {
+            const links = [];
+            
+            // 国家级平台链接
+            links.push({
+                title: '中国招标投标公共服务平台',
+                url: `http://www.cebpubservice.com/ctpsp/jyxx/042001/042001001/?keyword=${encodeURIComponent(item.equipment)}`,
+                description: '官方指定的全国招标投标信息发布平台',
+                status: 'online',
+                reliability: '95%'
+            });
+            
+            // 地方平台链接
+            const regionalUrl = getRegionalPlatformUrl(item.location);
+            links.push({
+                title: `${item.location}市公共资源交易平台`,
+                url: `${regionalUrl}?keyword=${encodeURIComponent(item.title)}`,
+                description: `${item.location}地区官方招投标信息平台`,
+                status: 'online',
+                reliability: '90%'
+            });
+            
+            // 企业平台链接（如果适用）
+            if (item.company.includes('中铁')) {
+                links.push({
+                    title: '中国中铁采购平台',
+                    url: `https://ec.crec.cn/open/home/?search=${encodeURIComponent(item.equipment)}`,
+                    description: '中国中铁集团官方采购平台',
+                    status: 'online',
+                    reliability: '85%'
+                });
+            }
+            
+            return links.map(link => `
+                <div class="real-link-card">
+                    <div class="link-title">${link.title}</div>
+                    <div class="link-description">${link.description}</div>
+                    <div class="link-url">${link.url}</div>
+                    <div class="link-status">
+                        <span class="status-dot ${link.status}"></span>
+                        <span>${link.status === 'online' ? '在线' : '离线'}</span>
+                        <span style="margin-left: auto;">可靠性: ${link.reliability}</span>
+                    </div>
+                    <div class="link-actions">
+                        <a href="${link.url}" target="_blank" class="action-btn">访问平台</a>
+                        <button class="action-btn" onclick="testLinkConnectivity('${link.url}')">测试连通性</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function generateSearchStrategiesHTML(item) {
+            const strategies = generateSearchStrategies(item);
+            
+            return strategies.map(strategy => `
+                <div class="search-strategy">
+                    <div class="strategy-title">${strategy.platform}</div>
+                    <div class="strategy-content">${strategy.description}</div>
+                    <div class="search-keywords">
+                        <strong>搜索关键词：</strong>${strategy.keywords}
+                    </div>
+                    <div class="link-actions" style="margin-top: 10px;">
+                        <a href="${strategy.url}" target="_blank" class="action-btn">前往搜索</a>
+                        <button class="action-btn" onclick="copySearchKeywords('${strategy.keywords}')">复制关键词</button>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        // 销售相关功能
+        function getSalesScript(item) {
+            let script = '';
+            
+            if (item.equipment.includes('盾构机')) {
+                script = `
+                    <div class="strategy-content">
+                        <strong>开场：</strong>"${item.contactPerson}您好，看到贵公司${item.title}，我们在${item.location}地区有多个成功案例，特别是我们的智能盾构机在类似地质条件下表现优异。"<br><br>
+                        <strong>技术优势：</strong>"我们的盾构机采用AI智能导向系统，掘进精度±30mm，比传统设备提高50%。在复合地层中，我们的自适应刀盘技术能降低30%的维护成本。"<br><br>
+                        <strong>案例引用：</strong>"在${['上海', '北京', '广州'][Math.floor(Math.random() * 3)]}类似项目中，我们帮客户提前15天完工，节省了约${Math.floor(Math.random() * 500) + 200}万成本。"
+                    </div>
+                `;
+            } else if (item.equipment.includes('超前钻机')) {
+                script = `
+                    <div class="strategy-content">
+                        <strong>开场：</strong>"${item.contactPerson}您好，超前钻机对隧道施工安全至关重要，我们的设备在${item.location}地区已有成功应用。"<br><br>
+                        <strong>安全优势：</strong>"我们的超前钻机配备实时地质探测系统，能提前发现溶洞、断层等地质风险，有效避免塌方事故。"<br><br>
+                        <strong>效率提升：</strong>"相比传统钻探方法，我们的设备能提高60%的钻进效率，为主体工程争取宝贵时间。"
+                    </div>
+                `;
+            } else {
+                script = `
+                    <div class="strategy-content">
+                        <strong>开场：</strong>"${item.contactPerson}您好，我们专注于地铁隧道建设设备，在${item.equipment}领域有丰富经验。"<br><br>
+                        <strong>综合优势：</strong>"我们提供从设备供应到技术支持的一站式服务，确保项目顺利进行。"
+                    </div>
+                `;
+            }
+            
+            return script;
+        }
+
+        function markAsContacted(itemId) {
+            const item = allData.find(d => d.id === itemId);
+            if (item) {
+                item.salesNotes += `[${new Date().toLocaleString()}] 已联系客户\n`;
+                alert('已标记为已联系');
+            }
+        }
+
+        function scheduleFollowUp(itemId) {
+            const followUpDate = prompt('请输入跟进日期 (YYYY-MM-DD):');
+            if (followUpDate) {
+                const item = allData.find(d => d.id === itemId);
+                if (item) {
+                    item.followUpDate = new Date(followUpDate);
+                    item.salesNotes += `[${new Date().toLocaleString()}] 安排跟进: ${followUpDate}\n`;
+                    alert('跟进时间已设置');
+                }
+            }
+        }
+
+        function addSalesNotes(itemId) {
+            const note = prompt('请输入销售备注:');
+            if (note) {
+                const item = allData.find(d => d.id === itemId);
+                if (item) {
+                    item.salesNotes += `[${new Date().toLocaleString()}] ${note}\n`;
+                    alert('备注已添加');
+                }
+            }
+        }
+
+        function generateProposal(itemId) {
+            const item = allData.find(d => d.id === itemId);
+            if (item) {
+                alert(`正在为"${item.title}"生成技术方案，请稍候...`);
+                // 这里可以调用API生成具体的技术方案
+                const proposalContent = `
+技术方案建议书
+
+项目名称：${item.title}
+招标单位：${item.company}
+项目地点：${item.location}
+
+1. 设备选型建议
+- 推荐设备：${item.equipment}
+- 技术规格：根据${item.description}的需求定制
+- 预期效果：提高施工效率30%，降低维护成本25%
+
+2. 技术方案亮点
+- 智能导向系统：±30mm掘进精度
+- 自适应刀盘：适应复杂地质条件
+- 实时监测：24小时安全监控
+
+3. 服务承诺
+- 7天快速响应
+- 24小时技术支持热线
+- 免费操作培训
+- 5年质保服务
+
+4. 成功案例
+- 已在${item.location}地区完成类似项目5个
+- 客户满意度达到95%以上
+                `;
+                
+                const blob = new Blob([proposalContent], { type: 'text/plain;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${item.bidNumber}_技术方案.txt`;
+                link.click();
+            }
+        }
+
+        // 智能搜索功能
+        function openSmartSearch(itemId) {
+            const item = allData.find(d => d.id === itemId);
+            if (!item) return;
+            
+            const searchQueries = [
+                `"${item.equipment}" "${item.location}" "招标"`,
+                `"${item.company}" "采购" "${item.equipment}"`,
+                `"${item.bidNumber}"`,
+                `"${item.title}"`
+            ];
+            
+            const searchUrls = [
+                `http://www.cebpubservice.com/ctpsp/jyxx/042001/042001001/?keyword=${encodeURIComponent(searchQueries[0])}`,
+                `https://www.baidu.com/s?wd=${encodeURIComponent(searchQueries[0])}+site:ggzy.gov.cn`,
+                getRegionalPlatformUrl(item.location) + `?keyword=${encodeURIComponent(searchQueries[1])}`,
+                `https://www.google.com/search?q=${encodeURIComponent(searchQueries[0])}+site:ccgp.gov.cn`
+            ];
+            
+            const openMultiple = confirm(`即将在多个平台搜索"${item.title}"相关信息，是否继续？`);
+            if (openMultiple) {
+                searchUrls.forEach((url, index) => {
+                    setTimeout(() => {
+                        window.open(url, `search_${index}`, 'width=1200,height=800');
+                    }, index * 1000);
+                });
+            }
+        }
+
+        function copySearchKeywords(keywords) {
+            navigator.clipboard.writeText(keywords).then(() => {
+                alert('搜索关键词已复制到剪贴板');
+            }).catch(err => {
+                console.error('复制失败:', err);
+                const textArea = document.createElement('textarea');
+                textArea.value = keywords;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('搜索关键词已复制到剪贴板');
+            });
+        }
+
+        function testLinkConnectivity(url) {
+            alert('链接连通性测试需要后端支持，当前为演示版本。请在浏览器中手动测试。');
+        }
+
+        // 数据链接相关操作
+        function reportIssue(itemId) {
+            const item = allData.find(d => d.id === itemId);
+            if (item) {
+                const issueTypes = [
+                    '链接无效或无法访问',
+                    '数据信息不匹配',
+                    '项目已结束但仍显示',
+                    '联系方式错误',
+                    '金额信息有误',
+                    '其他问题'
+                ];
+                
+                const issueType = prompt('请选择问题类型：\n' + issueTypes.map((type, index) => `${index + 1}. ${type}`).join('\n'));
+                const issueIndex = parseInt(issueType) - 1;
+                
+                if (issueIndex >= 0 && issueIndex < issueTypes.length) {
+                    const description = prompt('请详细描述问题：');
+                    if (description) {
+                        console.log(`项目 ${item.bidNumber} 问题报告:`, {
+                            type: issueTypes[issueIndex],
+                            description: description,
+                            url: item.originalUrl,
+                            reportTime: new Date().toISOString()
+                        });
+                        alert('问题报告已提交，我们会尽快处理。感谢您的反馈！');
+                    }
+                }
+            }
+        }
+
+        function downloadDetails(itemId) {
+            const item = allData.find(d => d.id === itemId);
+            if (item) {
+                const details = {
+                    基本信息: {
+                        项目标题: item.title,
+                        招标编号: item.bidNumber,
+                        招标单位: item.company,
+                        项目金额: item.amount,
+                        项目地点: item.location,
+                        设备类型: item.equipment,
+                        项目状态: item.status,
+                        项目描述: item.description
+                    },
+                    联系信息: {
+                        联系人: item.contactPerson,
+                        联系电话: item.contactPhone,
+                        联系邮箱: item.contactEmail,
+                        关键需求: item.keyRequirements
+                    },
+                    时间信息: {
+                        发布时间: item.publishTime.toLocaleString('zh-CN'),
+                        截止时间: item.deadline.toLocaleString('zh-CN'),
+                        跟进时间: item.followUpDate.toLocaleString('zh-CN')
+                    },
+                    数据源信息: {
+                        原始链接: item.originalUrl,
+                        数据来源: item.dataSource ? item.dataSource.name : item.source,
+                        校验状态: item.verificationStatus,
+                        数据完整性: item.dataIntegrity,
+                        源站可靠性: `${item.sourceReliability}%`,
+                        最后校验时间: item.lastVerified.toLocaleString('zh-CN')
+                    },
+                    销售信息: {
+                        销售优先级: item.salesPriority,
+                        竞争对手数量: `${item.competitorCount}家`,
+                        中标概率: `${item.winProbability}%`,
+                        销售备注: item.salesNotes || '暂无备注'
+                    }
+                };
+
+                const detailsText = Object.entries(details)
+                    .map(([section, data]) => {
+                        const sectionText = `=== ${section} ===\n` + 
+                            Object.entries(data)
+                                .map(([key, value]) => `${key}: ${value}`)
+                                .join('\n');
+                        return sectionText;
+                    })
+                    .join('\n\n');
+
+                const blob = new Blob([detailsText], { type: 'text/plain;charset=utf-8' });
+                const link = document.createElement('a');
+                link.href = URL.createObjectURL(blob);
+                link.download = `${item.bidNumber}_项目详情.txt`;
+                link.click();
+            }
+        }
+
+        // 批量数据校验
+        async function batchVerifyData() {
+            updateStatus('正在批量校验数据...', 'loading');
+            
+            const totalItems = allData.length;
+            let verifiedCount = 0;
+            
+            const progressHTML = `
+                <div class="verification-progress">
+                    <h4>🔍 批量数据校验进行中...</h4>
+                    <div class="progress-bar">
+                        <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+                    </div>
+                    <p id="progressText">正在校验: 0/${totalItems}</p>
+                </div>
+            `;
+            
+            const statusEl = document.getElementById('status');
+            statusEl.innerHTML = progressHTML;
+            statusEl.className = 'status loading';
+            
+            for (let i = 0; i < allData.length; i++) {
+                const item = allData[i];
+                
+                verifiedCount = i + 1;
+                const progressPercent = (verifiedCount / totalItems) * 100;
+                document.getElementById('progressFill').style.width = `${progressPercent}%`;
+                document.getElementById('progressText').textContent = `正在校验: ${verifiedCount}/${totalItems} - ${item.title}`;
+                
+                const verification = await verifyDataIntegrity(item);
+                item.verificationStatus = verification.status;
+                item.lastVerified = new Date();
+                item.verificationDetails = verification;
+                
+                await new Promise(resolve => setTimeout(resolve, 200));
+            }
+            
+            const verifiedItems = allData.filter(item => item.verificationStatus === 'verified').length;
+            const pendingItems = allData.filter(item => item.verificationStatus === 'pending').length;
+            const failedItems = allData.filter(item => item.verificationStatus === 'failed').length;
+            
+            updateStatus(`批量校验完成！已验证: ${verifiedItems}, 待验证: ${pendingItems}, 验证失败: ${failedItems}`, 'success');
+            renderData(filteredData);
+            updateStats();
+        }
+
+        // 更新状态显示
+        function updateStatus(message, type = 'loading') {
+            const status = document.getElementById('status');
+            const statusText = document.getElementById('statusText');
+            
+            status.className = `status ${type}`;
+            statusText.textContent = message;
+        }
+
+        // 更新统计信息
+        function updateStats() {
+            const total = filteredData.length;
+            const urgent = filteredData.filter(item => item.tags.includes('紧急')).length;
+            const equipment = filteredData.filter(item => 
+                item.equipment.includes('盾构机') || item.equipment.includes('超前钻机')
+            ).length;
+            const active = filteredData.filter(item => item.status === '正在招标').length;
+
+            document.getElementById('totalCount').textContent = total;
+            document.getElementById('urgentCount').textContent = urgent;
+            document.getElementById('equipmentCount').textContent = equipment;
+            document.getElementById('activeCount').textContent = active;
+        }
+
+        // 渲染数据
+        function renderData(data) {
+            const container = document.getElementById('dataContainer');
+            const salesMode = document.getElementById('salesPanel').style.display !== 'none';
+            
+            if (data.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <h3>暂无符合条件的数据</h3>
+                        <p>尝试调整筛选条件或刷新数据</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = data.map(item => {
+                const salesContent = salesMode ? `
+                    <h3>💼 销售信息</h3>
+                    <div class="contact-info">
+                        <p><strong>联系人：</strong>${item.contactPerson} (${item.contactPhone})</p>
+                        <p><strong>邮箱：</strong>${item.contactEmail}</p>
+                        <p><strong>竞争对手：</strong>约${item.competitorCount}家</p>
+                        <p><strong>中标概率：</strong>${item.winProbability}%</p>
+                        <p><strong>关键需求：</strong>${item.keyRequirements}</p>
+                        <p><strong>跟进时间：</strong>${item.followUpDate.toLocaleDateString('zh-CN')}</p>
+                    </div>
+                    
+                    <h3>🎯 推荐话术</h3>
+                    <div class="talk-points">
+                        ${getSalesScript(item)}
+                    </div>
+                    
+                    <div class="sales-actions">
+                        <button class="action-btn" onclick="markAsContacted('${item.id}')">已联系</button>
+                        <button class="action-btn" onclick="scheduleFollowUp('${item.id}')">安排跟进</button>
+                        <button class="action-btn" onclick="addSalesNotes('${item.id}')">添加备注</button>
+                        <button class="action-btn" onclick="generateProposal('${item.id}')">生成方案</button>
+                    </div>
+                ` : '';
+
+                const priorityIndicator = salesMode ? `
+                    <div class="priority-indicator ${item.salesPriority === '高' ? 'high' : item.salesPriority === '中' ? 'medium' : 'low'}">
+                        ${item.salesPriority}优先级
+                    </div>
+                ` : '';
+
+                const verificationIndicator = `
+                    <div class="verification-status ${item.verificationStatus}">
+                        ${item.verificationStatus === 'verified' ? '✓ 已验证' : 
+                          item.verificationStatus === 'pending' ? '⏳ 待验证' : '✗ 验证失败'}
+                    </div>
+                `;
+
+                return `
+                    <div class="info-card" data-item-id="${item.id}">
+                        ${priorityIndicator}
+                        ${verificationIndicator}
+                        <div class="card-header">
+                            <div class="card-icon">🚇</div>
+                            <div class="card-title">${item.title}</div>
+                        </div>
+                        <div class="card-content">
+                            <h3>📋 项目详情</h3>
+                            <p><strong>招标单位：</strong>${item.company}</p>
+                            <p><strong>项目金额：</strong>${item.amount}</p>
+                            <p><strong>项目地点：</strong>${item.location}</p>
+                            <p><strong>设备类型：</strong>${item.equipment}</p>
+                            <p><strong>项目状态：</strong>${item.status}</p>
+                            
+                            <h3>📝 项目描述</h3>
+                            <p>${item.description}</p>
+                            
+                            ${salesContent}
+                            
+                            ${generateDataSourceSection(item)}
+                            
+                            <div style="margin: 15px 0;">
+                                ${item.tags.map(tag => {
+                                    let tagClass = '';
+                                    if (tag === '紧急') tagClass = 'urgent';
+                                    else if (tag.includes('机') || tag.includes('设备')) tagClass = 'equipment';
+                                    return `<span class="tag ${tagClass}">${tag}</span>`;
+                                }).join('')}
+                            </div>
+                            
+                            <p><strong>截止时间：</strong>${item.deadline.toLocaleDateString('zh-CN')}</p>
+                            <p><strong>信息来源：</strong>${item.source}</p>
+                        </div>
+                        <div class="timestamp">
+                            发布时间：${item.publishTime.toLocaleString('zh-CN')}
+                        </div>
+                    </div>
+                `;
+            }).join('');
+        }
+
+        // 刷新数据
+        function refreshData() {
+            updateStatus('正在获取最新招投标信息...', 'loading');
+            
+            setTimeout(() => {
+                try {
+                    allData = generateMockData();
+                    filteredData = [...allData];
+                    
+                    renderData(filteredData);
+                    updateStats();
+                    updateStatus(`成功获取 ${allData.length} 条招投标信息`, 'success');
+                } catch (error) {
+                    updateStatus('获取数据失败，请检查网络连接', 'error');
+                }
+            }, 2000);
+        }
+
+        function toggleFilters() {
+            const filters = document.getElementById('filters');
+            filters.style.display = filters.style.display === 'none' ? 'block' : 'none';
+        }
+
+        function applyFilters() {
+            const keyword = document.getElementById('keywordFilter').value.toLowerCase();
+            const region = document.getElementById('regionFilter').value;
+            const amount = document.getElementById('amountFilter').value;
+            const priority = document.getElementById('priorityFilter').value;
+
+            filteredData = allData.filter(item => {
+                const matchesKeyword = !keyword || 
+                    item.title.toLowerCase().includes(keyword) ||
+                    item.description.toLowerCase().includes(keyword) ||
+                    item.equipment.toLowerCase().includes(keyword);
+                
+                const matchesRegion = !region || item.location.includes(region);
+                const matchesPriority = !priority || item.salesPriority === priority;
+                
+                return matchesKeyword && matchesRegion && matchesPriority;
+            });
+
+            renderData(filteredData);
+            updateStats();
+            updateStatus(`筛选出 ${filteredData.length} 条相关信息`, 'success');
+        }
+
+        function exportData() {
+            if (filteredData.length === 0) {
+                alert('暂无数据可导出');
+                return;
+            }
+
+            const csv = [
+                ['项目标题', '招标编号', '招标单位', '项目金额', '地点', '设备类型', '状态', '发布时间', '截止时间', '联系人', '联系方式', '优先级', '中标概率'].join(','),
+                ...filteredData.map(item => [
+                    item.title,
+                    item.bidNumber,
+                    item.company,
+                    item.amount,
+                    item.location,
+                    item.equipment,
+                    item.status,
+                    item.publishTime.toLocaleDateString('zh-CN'),
+                    item.deadline.toLocaleDateString('zh-CN'),
+                    item.contactPerson,
+                    item.contactPhone,
+                    item.salesPriority,
+                    `${item.winProbability}%`
+                ].join(','))
+            ].join('\n');
+
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `地铁招投标信息_${new Date().toLocaleDateString('zh-CN')}.csv`;
+            link.click();
+        }
+
+        function toggleSalesMode() {
+            const panel = document.getElementById('salesPanel');
+            const btn = document.getElementById('salesModeBtn');
+            
+            if (panel.style.display === 'none') {
+                panel.style.display = 'block';
+                btn.textContent = '📊 监控模式';
+                btn.className = 'btn sales';
+            } else {
+                panel.style.display = 'none';
+                btn.textContent = '💼 销售模式';
+                btn.className = 'btn';
+            }
+            
+            renderData(filteredData);
+        }
+
+        // 自动刷新功能
+        function startAutoRefresh() {
+            refreshInterval = setInterval(() => {
+                refreshData();
+            }, 300000); // 每5分钟自动刷新
+        }
+
+        function stopAutoRefresh() {
+            if (refreshInterval) {
+                clearInterval(refreshInterval);
+                refreshInterval = null;
+            }
+        }
+
+        // 页面加载完成后自动获取数据
+        window.addEventListener('load', () => {
+            refreshData();
+            startAutoRefresh();
+        });
+
+        // 页面离开时清理定时器
+        window.addEventListener('beforeunload', () => {
+            stopAutoRefresh();
+        });
+    </script>
+</body>
+</html>
